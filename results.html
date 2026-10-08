@@ -67,6 +67,7 @@ td.nowrap{white-space:nowrap}
 .en .tag{display:block;font-size:.7rem;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase}
 .note button{margin-top:6px}
 .err{color:var(--no);font-weight:500}
+.warn{border-color:color-mix(in srgb,var(--no) 45%,var(--line));color:var(--no);font-weight:500}
 .needhead{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:8px}
 .needhead h2{margin:0;font-size:1.05rem}
 .hint{color:var(--muted);font-size:.85rem}
@@ -106,6 +107,7 @@ td.othr{min-width:220px;max-width:420px;white-space:pre-wrap;word-break:break-wo
       <button type="button" id="xlsx">Download Excel</button>
       <button type="button" class="ghost" id="logout">Sign out</button>
     </div>
+    <div class="card warn" id="warn" hidden></div>
     <div class="tiles" id="tiles"></div>
 
     <div class="card">
@@ -157,8 +159,11 @@ async function load(){
     const j=await r.json();
     if(!j.ok){ if(j.error==="key"){logout("Wrong password.");return;} throw {msg:"The server returned an error. Try again."}; }
     if(!Array.isArray(j.rows)) throw {msg:"The Google Apps Script is still the old version. In Apps Script: Deploy → Manage deployments → Edit → Version: New version → Deploy."};
-    if(j.rows.some(x=>!/^\d{4}-\d{2}$/.test(x.month))) throw {msg:"The Responses tab is still in the old layout. In Apps Script, select the migrate function and press Run once."};
+    const bad=j.rows.filter(x=>!/^\d{4}-\d{2}$/.test(x.month));
+    j.rows=j.rows.filter(x=>/^\d{4}-\d{2}$/.test(x.month));
     DATA=j;
+    const w=$("warn");
+    if(bad.length){ w.textContent=`${bad.length} row(s) in the Sheet are in the old layout and are not shown (${bad.map(x=>x.month).join(", ")}). In Apps Script, run the fixOldRows function once.`; w.hidden=false; } else w.hidden=true;
     const months=[...new Set([j.currentMonth,...j.rows.map(x=>x.month)])].sort().reverse();
     const sel=$("month"), keep=sel.value||j.currentMonth;
     sel.textContent="";
