@@ -67,6 +67,15 @@ td.nowrap{white-space:nowrap}
 .en .tag{display:block;font-size:.7rem;font-weight:600;letter-spacing:.05em;color:var(--muted);text-transform:uppercase}
 .note button{margin-top:6px}
 .err{color:var(--no);font-weight:500}
+.needhead{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:8px}
+.needhead h2{margin:0;font-size:1.05rem}
+.hint{color:var(--muted);font-size:.85rem}
+table.needs th.num,table.needs td.num{text-align:right;width:150px}
+td.num .q{font-size:1.05rem;font-weight:700;color:var(--no)}
+td.num .z{color:var(--muted)}
+tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:0}
+tfoot td.num{color:var(--no);font-size:1.05rem}
+td.othr{min-width:220px;max-width:420px;white-space:pre-wrap;word-break:break-word;color:var(--fg)}
 .empty{color:var(--muted);text-align:center;padding:28px}
 .gate{max-width:380px;margin:40px auto;display:flex;flex-direction:column;gap:12px}
 .gate h2{margin:0;font-size:1.1rem}
@@ -98,6 +107,17 @@ td.nowrap{white-space:nowrap}
       <button type="button" class="ghost" id="logout">Sign out</button>
     </div>
     <div class="tiles" id="tiles"></div>
+
+    <div class="card">
+      <div class="needhead"><h2>Needs by branch</h2><span class="hint">What each branch asked for this month</span></div>
+      <div class="tablewrap">
+        <table class="needs">
+          <thead><tr><th>Branch</th><th class="num">Backup Receipt Printer</th><th class="num">Backup Barcode Scanner</th><th class="num">Backup POS Fingerprint</th><th>Other needs (notes)</th></tr></thead>
+          <tbody id="needRows"></tbody>
+          <tfoot id="needFoot"></tfoot>
+        </table>
+      </div>
+    </div>
     <div class="card missing" id="missing"></div>
     <div class="card">
       <div class="tablewrap">
@@ -172,6 +192,7 @@ function render(){
   m.appendChild(l);
   miss.forEach(b=>{const p=document.createElement("span");p.className="pill n";p.textContent=b;m.appendChild(p)});
 
+  renderNeeds(rows,by);
   const tb=$("rows"); tb.textContent="";
   if(!rows.length){tb.innerHTML=`<tr><td colspan="7" class="empty">No responses for this month yet.</td></tr>`;return;}
   DATA.branches.filter(b=>by[b]).forEach(b=>{
@@ -184,6 +205,23 @@ function render(){
     noteCell(tr.querySelector(".note"),r);
     tb.appendChild(tr);
   });
+}
+
+function renderNeeds(rows,by){
+  const nb=$("needRows"), nf=$("needFoot"); nb.textContent=""; nf.textContent="";
+  const tot={}; ITEMS.forEach(([k])=>tot[k]=0);
+  const list=DATA.branches.filter(b=>by[b]).filter(b=>{const r=by[b];return ITEMS.some(([k])=>st(r[k])==="no")||r.notes;});
+  if(!list.length){nb.innerHTML=`<tr><td colspan="5" class="empty">${rows.length?"No needs reported this month.":"No responses for this month yet."}</td></tr>`;return;}
+  list.forEach(b=>{
+    const r=by[b], tr=document.createElement("tr");
+    const cells=ITEMS.map(([k])=>{const n=st(r[k])==="no"?num(r[k].need):0; tot[k]+=n;
+      return `<td class="num">${n?`<span class="q">${n}</span>`:`<span class="z">—</span>`}</td>`}).join("");
+    tr.innerHTML=`<td class="b"></td>${cells}<td class="othr"></td>`;
+    tr.querySelector(".b").textContent=b;
+    tr.querySelector(".othr").textContent=r.notesEn||r.notes||"—";
+    nb.appendChild(tr);
+  });
+  nf.innerHTML=`<tr><td>Total to buy</td>${ITEMS.map(([k])=>`<td class="num">${tot[k]}</td>`).join("")}<td></td></tr>`;
 }
 
 function noteCell(td,r){
@@ -200,7 +238,7 @@ function noteCell(td,r){
       try{
         const res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"translate",key:KEY,month:r.month,branch:r.branch})});
         const j=await res.json(); if(!j.ok) throw 0;
-        r.notesEn=j.en||"(empty)"; noteCell(td,r);
+        r.notesEn=j.en||"(empty)"; noteCell(td,r); render();
       }catch(e){ b.disabled=false; b.textContent="Translation failed — try again"; }
     };
     td.appendChild(b);
