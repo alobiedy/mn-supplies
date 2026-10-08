@@ -11,15 +11,15 @@
 :root{
   --brand:#096EB0; --brand-soft:#E6F0F8;
   --bg:#F3F6F9; --surface:#ffffff; --fg:#14283A; --muted:#5B6F82; --line:#D6E1EA;
-  --yes:#1E8A5A; --no:#C2412D; --warn-bg:#FFF6E0; --warn-fg:#7A5300;
+  --yes:#1E8A5A; --no:#C2412D;
   --font:"Rubik",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --brand:#2F8FD3; --brand-soft:#11314A; --bg:#0D1822; --surface:#14222F; --fg:#E4EDF4; --muted:#93A8BA; --line:#24384A;
-  --yes:#3DBB83; --no:#F07560; --warn-bg:#3A2E10; --warn-fg:#F5D17A; color-scheme:dark}}
+  --yes:#3DBB83; --no:#F07560; color-scheme:dark}}
 :root[data-theme="dark"]{
   --brand:#2F8FD3; --brand-soft:#11314A; --bg:#0D1822; --surface:#14222F; --fg:#E4EDF4; --muted:#93A8BA; --line:#24384A;
-  --yes:#3DBB83; --no:#F07560; --warn-bg:#3A2E10; --warn-fg:#F5D17A; color-scheme:dark}
+  --yes:#3DBB83; --no:#F07560; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
@@ -49,7 +49,7 @@ button:focus-visible{outline:3px solid var(--brand-soft);outline-offset:2px}
 .big.zero{color:var(--muted)}
 .big small{font-size:.85rem;font-weight:500;color:var(--muted);margin-left:6px}
 .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.meta span b{color:var(--fg);font-weight:600}
+.meta b{color:var(--fg);font-weight:600}
 .missing{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .missing .lbl{font-weight:600;margin-right:4px}
 .tablewrap{overflow-x:auto}
@@ -85,23 +85,20 @@ td.nowrap{white-space:nowrap}
     <h2>Enter results password</h2>
     <input type="password" id="key" autocomplete="current-password" placeholder="Password">
     <div class="err" id="gateErr" hidden></div>
-    <button type="submit">Open results</button>
+    <button type="submit" id="open">Open results</button>
   </form>
 
   <div class="wrap stack" id="app" hidden>
     <div class="card toolbar">
       <label for="month" class="progress">Month</label>
       <select id="month"></select>
-      <div class="progress grow"><b id="done">0</b> / 10 branches submitted</div>
+      <div class="progress grow"><b id="done">0</b> / <span id="total">10</span> branches submitted</div>
       <button type="button" class="ghost" id="refresh">Refresh</button>
       <button type="button" id="xlsx">Download Excel</button>
       <button type="button" class="ghost" id="logout">Sign out</button>
     </div>
-
     <div class="tiles" id="tiles"></div>
-
     <div class="card missing" id="missing"></div>
-
     <div class="card">
       <div class="tablewrap">
         <table>
@@ -116,7 +113,7 @@ td.nowrap{white-space:nowrap}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwDL-Jbd7ry4a1WHE04sOuOWSbuv91p9lEvbmCK9_5AnRX66MwhWuv9SA8rpZ3Xknkj/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwgjE4k-svgjL0tV0I-KihQo4TaqthxA2rjf25qgwmp2jGJQ6ZMyOtN0QmOOwpkWQt2/exec";
 const ITEMS=[["printer","Receipt Printer"],["backup","Backup Receipt Printer"],["scanner","Barcode Scanner"],["fingerprint","POS Fingerprint"]];
 const $=id=>document.getElementById(id);
 let KEY="", DATA=null;
@@ -124,17 +121,23 @@ try{KEY=localStorage.getItem("mn-results-key")||""}catch(e){}
 
 const st=v=>{const s=String(v&&v.status||"");return s.startsWith("Evet")?"yes":s.startsWith("Hayır")?"no":s.startsWith("İhtiyaç")?"none":""};
 const num=x=>parseInt(x,10)||0;
-const monthLabel=m=>{const [y,mo]=m.split("-").map(Number);return new Date(y,mo-1,1).toLocaleDateString("en-GB",{month:"long",year:"numeric"})};
+const monthLabel=m=>{const [y,mo]=String(m).split("-").map(Number);return y&&mo?new Date(y,mo-1,1).toLocaleDateString("en-GB",{month:"long",year:"numeric"}):String(m)};
 const fmt=s=>{const d=new Date(s);return isNaN(d)?s:d.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Riyadh"})};
 
+function fail(msg){
+  $("err").textContent=msg; $("err").hidden=false;
+  if(!DATA){ $("app").hidden=true; $("gate").hidden=false; $("gateErr").textContent=msg; $("gateErr").hidden=false; }
+}
+
 async function load(){
-  $("err").hidden=true;
-  const btn=$("refresh"); btn.disabled=true;
+  $("err").hidden=true; $("gateErr").hidden=true;
+  $("refresh").disabled=true; $("open").disabled=true;
   try{
-    const r=await fetch(SCRIPT_URL+"?action=results&key="+encodeURIComponent(KEY));
+    const r=await fetch(SCRIPT_URL+"?action=results&key="+encodeURIComponent(KEY)+"&t="+Date.now());
     const j=await r.json();
-    if(!j.ok){ if(j.error==="key"){logout("Wrong password.");return;} throw 0; }
+    if(!j.ok){ if(j.error==="key"){logout("Wrong password.");return;} throw {msg:"The server returned an error. Try again."}; }
     if(!Array.isArray(j.rows)) throw {msg:"The Google Apps Script is still the old version. In Apps Script: Deploy → Manage deployments → Edit → Version: New version → Deploy."};
+    if(j.rows.some(x=>!/^\d{4}-\d{2}$/.test(x.month))) throw {msg:"The Responses tab is still in the old layout. In Apps Script, select the migrate function and press Run once."};
     DATA=j;
     const months=[...new Set([j.currentMonth,...j.rows.map(x=>x.month)])].sort().reverse();
     const sel=$("month"), keep=sel.value||j.currentMonth;
@@ -143,22 +146,16 @@ async function load(){
     sel.value=months.includes(keep)?keep:j.currentMonth;
     $("gate").hidden=true; $("app").hidden=false;
     render();
-  }catch(e){
-    const msg=(e&&e.msg)||"Could not load results. Check your internet connection and try again.";
-    $("err").textContent=msg; $("err").hidden=false;
-    if(!DATA){ $("app").hidden=true; $("gate").hidden=false; $("gateErr").textContent=msg; $("gateErr").hidden=false; }
-  }
-  finally{ btn.disabled=false; }
+  }catch(e){ fail((e&&e.msg)||"Could not load results. Check your internet connection and try again."); }
+  finally{ $("refresh").disabled=false; $("open").disabled=false; }
 }
 
 function monthRows(){ const m=$("month").value; return DATA.rows.filter(r=>r.month===m); }
 
 function render(){
   const rows=monthRows(), by={}; rows.forEach(r=>by[r.branch]=r);
-  $("done").textContent=rows.length;
-  $("done").parentElement.lastChild.textContent=" / "+DATA.branches.length+" branches submitted";
+  $("done").textContent=rows.length; $("total").textContent=DATA.branches.length;
 
-  // tiles
   const tiles=$("tiles"); tiles.textContent="";
   ITEMS.forEach(([k,label])=>{
     let need=0,needB=0,have=0,none=0;
@@ -169,14 +166,12 @@ function render(){
     d.querySelector("h3").textContent=label; tiles.appendChild(d);
   });
 
-  // missing
   const miss=DATA.branches.filter(b=>!by[b]), m=$("missing"); m.textContent="";
   const l=document.createElement("span"); l.className="lbl";
   l.textContent=miss.length?`Not submitted yet (${miss.length}):`:"All branches have submitted for this month.";
   m.appendChild(l);
   miss.forEach(b=>{const p=document.createElement("span");p.className="pill n";p.textContent=b;m.appendChild(p)});
 
-  // table
   const tb=$("rows"); tb.textContent="";
   if(!rows.length){tb.innerHTML=`<tr><td colspan="8" class="empty">No responses for this month yet.</td></tr>`;return;}
   DATA.branches.filter(b=>by[b]).forEach(b=>{
@@ -216,7 +211,7 @@ $("xlsx").onclick=()=>{
   if(!DATA||!window.XLSX) return;
   const m=$("month").value, rows=monthRows(), by={}; rows.forEach(r=>by[r.branch]=r);
   const out=DATA.branches.map(b=>{const r=by[b]; const o={"Month":m,"Branch":b,"Status":r?"Submitted":"Not submitted"};
-    ITEMS.forEach(([k,l])=>{const v=r&&r[k]; o[l]=v?v.status:""; o[l+" - Have"]=v&&v.have!==""?num(v.have)||"":""; o[l+" - Need"]=v&&v.need!==""?num(v.need)||"":"";});
+    ITEMS.forEach(([k,l])=>{const v=r&&r[k]; o[l]=v?v.status:""; o[l+" - Have"]=v?(num(v.have)||""):""; o[l+" - Need"]=v?(num(v.need)||""):"";});
     o["Notes"]=r?r.notes.slice(0,32767):""; o["Notes (EN)"]=r?r.notesEn.slice(0,32767):""; o["Name"]=r?r.name:""; o["Submitted At"]=r?fmt(r.submittedAt):"";
     return o;});
   const ws=XLSX.utils.json_to_sheet(out);
@@ -236,7 +231,7 @@ $("month").onchange=render;
 $("gate").addEventListener("submit",e=>{
   e.preventDefault(); KEY=$("key").value.trim(); if(!KEY) return;
   try{localStorage.setItem("mn-results-key",KEY)}catch(e){}
-  $("gateErr").hidden=true; load();
+  load();
 });
 
 if(KEY) load(); else $("gate").hidden=false;

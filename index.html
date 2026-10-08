@@ -69,13 +69,14 @@ header .top{max-width:640px;margin:0 auto 16px;display:flex;justify-content:flex
 .lang button[aria-pressed=true]{background:#fff;color:#096EB0}
 textarea{width:100%;font:inherit;color:var(--fg);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:120px;resize:vertical}
 textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+header .period{display:inline-block;margin-top:8px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;font-size:.85rem;font-weight:500;opacity:1}
 .counter{font-size:.8rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .opt{font-weight:400;color:var(--muted);font-size:.85rem}
 .adminhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .adminhead button{width:auto;padding:10px 16px;font-size:.9rem}
 td.note{white-space:normal;min-width:220px;max-width:360px}
 </style>
-<style>body{margin:0}</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
 
@@ -92,6 +93,7 @@ td.note{white-space:normal;min-width:220px;max-width:360px}
     <div>
       <h1 data-t="title"></h1>
       <p data-t="subtitle"></p>
+      <p class="period" id="period" hidden></p>
     </div>
   </div>
 </header>
@@ -150,31 +152,31 @@ td.note{white-space:normal;min-width:220px;max-width:360px}
 <script>
 const T={
  tr:{title:"Şube Malzeme Anketi",subtitle:"Fiş yazıcısı, barkod okuyucu ve POS parmak izi okuyucu durumunu bildirin. Yaklaşık 2 dakika sürer.",
-  branchH:"Şube",branchQ:"Şubenizi seçin",branchPh:"— Şube seçin —",branchHint:"Her şube formu yalnızca bir kez gönderebilir.",
+  branchH:"Şube",branchQ:"Şubenizi seçin",branchPh:"— Şube seçin —",branchHint:"Her şube formu ayda yalnızca bir kez gönderebilir.",
   printerH:"Fiş Yazıcısı",backupH:"Yedek Fiş Yazıcısı",scannerH:"Barkod Okuyucu",fpH:"POS Parmak İzi Okuyucu",
   q_printer:"Şubenizde fiş yazıcısı var mı?",q_backup:"Yedek fiş yazıcınız var mı?",q_scanner:"Şubenizde barkod okuyucu var mı?",q_fingerprint:"Şubenizde POS parmak izi okuyucu var mı?",
   yes:"Evet",no:"Hayır",none:"İhtiyaç Yok",qtyHave:"Kaç adet var?",qtyNeed:"Kaç adet ihtiyacınız var?",min1:"En az 1",
   notesH:"Ek Notlar",optional:"(isteğe bağlı)",notesQ:"İhtiyacınız olan başka bir şey varsa buraya yazın (en fazla 32.767 karakter)",
   nameH:"Adınız",nameQ:"Adınız ve soyadınız",namePh:"Örn. Ahmet Yılmaz",
   warnB:"Dikkat:",warn:"Form gönderildikten sonra cevaplar değiştirilemez. Lütfen göndermeden önce kontrol edin.",
-  submit:"Formu Gönder",sending:"Gönderiliyor…",submitted:" — gönderildi",
+  submit:"Formu Gönder",sending:"Gönderiliyor…",submitted:" — bu ay gönderildi",monthL:"Dönem",
   eBranch:"Lütfen şubenizi seçin.",eYN:"Lütfen tüm soruları cevaplayın (Evet, Hayır veya İhtiyaç Yok).",eQty:"Adet en az 1 olmalıdır.",eName:"Lütfen adınızı ve soyadınızı yazın.",
-  eConn:"Form henüz yapılandırılmadı. Lütfen BT departmanı ile iletişime geçin.",eDup:"Bu şube formu zaten gönderdi. Cevaplar değiştirilemez.",
+  eConn:"Form henüz yapılandırılmadı. Lütfen BT departmanı ile iletişime geçin.",eDup:"Bu şube bu ay formu zaten gönderdi. Cevaplar değiştirilemez.",
   ePerm:"Gönderme izniniz yok. Lütfen BT departmanı ile iletişime geçin.",eFail:"Gönderilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.",
   doneH:"Yanıtınız alındı",doneT:(b,n)=>`${b} şubesi için teşekkürler, ${n}.`,doneLock:"Gönderilen form artık düzenlenemez. Bir hata varsa lütfen BT departmanı ile iletişime geçin.",
   respH:"Gelen yanıtlar",download:"Excel olarak indir",thBranch:"Şube",thName:"Ad",thDate:"Tarih",
   has:"Var",hasnt:"Yok",pcs:"adet",need:"gerekli",waiting:"Bekleniyor"},
  en:{title:"Branch Supplies Survey",subtitle:"Report the status of receipt printers, barcode scanners and POS fingerprint readers. Takes about 2 minutes.",
-  branchH:"Branch",branchQ:"Select your branch",branchPh:"— Select branch —",branchHint:"Each branch can submit this form only once.",
+  branchH:"Branch",branchQ:"Select your branch",branchPh:"— Select branch —",branchHint:"Each branch can submit this form once per month.",
   printerH:"Receipt Printer",backupH:"Backup Receipt Printer",scannerH:"Barcode Scanner",fpH:"POS Fingerprint Reader",
   q_printer:"Does your branch have a receipt printer?",q_backup:"Do you have a backup receipt printer?",q_scanner:"Does your branch have a barcode scanner?",q_fingerprint:"Does your branch have a POS fingerprint reader?",
   yes:"Yes",no:"No",none:"Don't Need",qtyHave:"How many do you have?",qtyNeed:"How many do you need?",min1:"At least 1",
   notesH:"Additional Notes",optional:"(optional)",notesQ:"Write anything else you need here (max 32,767 characters)",
   nameH:"Your Name",nameQ:"Your full name",namePh:"e.g. Ahmed Ali",
   warnB:"Note:",warn:"Answers cannot be changed after the form is submitted. Please review before sending.",
-  submit:"Submit Form",sending:"Submitting…",submitted:" — submitted",
+  submit:"Submit Form",sending:"Submitting…",submitted:" — submitted this month",monthL:"Period",
   eBranch:"Please select your branch.",eYN:"Please answer every question (Yes, No or Don't Need).",eQty:"Quantity must be at least 1.",eName:"Please enter your full name.",
-  eConn:"The form is not set up yet. Please contact the IT department.",eDup:"This branch has already submitted. Answers cannot be changed.",
+  eConn:"The form is not set up yet. Please contact the IT department.",eDup:"This branch has already submitted this month. Answers cannot be changed.",
   ePerm:"You don't have permission to submit. Please contact the IT department.",eFail:"Could not submit. Check your internet connection and try again.",
   doneH:"Your response was received",doneT:(b,n)=>`Thank you, ${n}, for ${b} branch.`,doneLock:"A submitted form can no longer be edited. If something is wrong, please contact the IT department.",
   respH:"Responses",download:"Download Excel",thBranch:"Branch",thName:"Name",thDate:"Date",
@@ -221,6 +223,7 @@ function applyLang(){
   if(lastBranch) $("doneText").textContent=t("doneT")(lastBranch,lastName);
   if(!$("err").hidden && $("err").dataset.k) $("err").textContent=t($("err").dataset.k);
   markSubmitted();
+  if(typeof showPeriod==="function"&&typeof CUR_MONTH!=="undefined") showPeriod();
 }
 function setLang(l){L=l;try{localStorage.setItem("mn-lang",l)}catch(e){};applyLang();}
 $("lang-tr").onclick=()=>setLang("tr"); $("lang-en").onclick=()=>setLang("en");
@@ -239,24 +242,28 @@ function markSubmitted(){
 }
 
 // ===== Google Apps Script web app URL (paste yours here) =====
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwDL-Jbd7ry4a1WHE04sOuOWSbuv91p9lEvbmCK9_5AnRX66MwhWuv9SA8rpZ3Xknkj/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwgjE4k-svgjL0tV0I-KihQo4TaqthxA2rjf25qgwmp2jGJQ6ZMyOtN0QmOOwpkWQt2/exec";
 
 const api=async(body)=>{
   const opt=body?{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}:{};
   const r=await fetch(SCRIPT_URL,opt); return r.json();
 };
+let CUR_MONTH="";
+function showPeriod(){ if(!CUR_MONTH) return; const [y,m]=CUR_MONTH.split("-").map(Number);
+  const txt=new Date(y,m-1,1).toLocaleDateString(L==="tr"?"tr-TR":"en-GB",{month:"long",year:"numeric"});
+  const p=$("period"); p.textContent=t("monthL")+": "+txt; p.hidden=false; }
 const configured=()=>/^https:\/\/script\.google\.com\//.test(SCRIPT_URL);
 
 async function loadSubmitted(){
   if(!configured()) return;
-  try{const j=await api(); if(j&&j.ok){submitted={};(j.submitted||[]).forEach(b=>submitted[slug(b)]=true);markSubmitted();}}catch(e){}
+  try{const j=await api(); if(j&&j.ok){CUR_MONTH=j.month||"";showPeriod();submitted={};(j.submitted||[]).forEach(b=>submitted[slug(b)]=true);markSubmitted();}}catch(e){}
 }
 
 $("form").addEventListener("submit",async e=>{
   e.preventDefault(); showErr("");
   const branch=sel.value;
   if(!branch) return showErr("eBranch");
-  const data={branch};
+  const data={action:"submit",branch};
   for(const it of ITEMS){
     const r=document.querySelector(`input[name=${it.key}]:checked`);
     if(!r) return showErr("eYN");
