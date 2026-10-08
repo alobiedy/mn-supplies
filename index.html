@@ -110,13 +110,12 @@ td.note{white-space:normal;min-width:220px;max-width:360px}
         </div>
       </section>
 
-      <section class="card" id="sec-printer"><h2><span class="step">2</span><span data-t="printerH"></span></h2></section>
-      <section class="card" id="sec-backup"><h2><span class="step">3</span><span data-t="backupH"></span></h2></section>
-      <section class="card" id="sec-scanner"><h2><span class="step">4</span><span data-t="scannerH"></span></h2></section>
-      <section class="card" id="sec-fingerprint"><h2><span class="step">5</span><span data-t="fpH"></span></h2></section>
+      <section class="card" id="sec-backup"><h2><span class="step">2</span><span data-t="backupH"></span></h2></section>
+      <section class="card" id="sec-scanner"><h2><span class="step">3</span><span data-t="scannerH"></span></h2></section>
+      <section class="card" id="sec-fingerprint"><h2><span class="step">4</span><span data-t="fpH"></span></h2></section>
 
       <section class="card">
-        <h2><span class="step">6</span><span data-t="notesH"></span>&nbsp;<span class="opt" data-t="optional"></span></h2>
+        <h2><span class="step">5</span><span data-t="notesH"></span>&nbsp;<span class="opt" data-t="optional"></span></h2>
         <div class="field">
           <label class="q" for="notes" data-t="notesQ"></label>
           <textarea id="notes" maxlength="32767"></textarea>
@@ -125,7 +124,7 @@ td.note{white-space:normal;min-width:220px;max-width:360px}
       </section>
 
       <section class="card">
-        <h2><span class="step">7</span><span data-t="nameH"></span></h2>
+        <h2><span class="step">6</span><span data-t="nameH"></span></h2>
         <div class="field">
           <label class="q" for="name" data-t="nameQ"></label>
           <input type="text" id="name" autocomplete="name" maxlength="255" required>
@@ -151,7 +150,7 @@ td.note{white-space:normal;min-width:220px;max-width:360px}
 
 <script>
 const T={
- tr:{title:"Şube Malzeme Anketi",subtitle:"Fiş yazıcısı, barkod okuyucu ve POS parmak izi okuyucu durumunu bildirin. Yaklaşık 2 dakika sürer.",
+ tr:{title:"Şube Malzeme Anketi",subtitle:"Yedek fiş yazıcısı, barkod okuyucu ve POS parmak izi okuyucu durumunu bildirin. Yaklaşık 2 dakika sürer.",
   branchH:"Şube",branchQ:"Şubenizi seçin",branchPh:"— Şube seçin —",branchHint:"Her şube formu ayda yalnızca bir kez gönderebilir.",
   printerH:"Fiş Yazıcısı",backupH:"Yedek Fiş Yazıcısı",scannerH:"Barkod Okuyucu",fpH:"POS Parmak İzi Okuyucu",
   q_printer:"Şubenizde fiş yazıcısı var mı?",q_backup:"Yedek fiş yazıcınız var mı?",q_scanner:"Şubenizde barkod okuyucu var mı?",q_fingerprint:"Şubenizde POS parmak izi okuyucu var mı?",
@@ -166,7 +165,7 @@ const T={
   doneH:"Yanıtınız alındı",doneT:(b,n)=>`${b} şubesi için teşekkürler, ${n}.`,doneLock:"Gönderilen form artık düzenlenemez. Bir hata varsa lütfen BT departmanı ile iletişime geçin.",
   respH:"Gelen yanıtlar",download:"Excel olarak indir",thBranch:"Şube",thName:"Ad",thDate:"Tarih",
   has:"Var",hasnt:"Yok",pcs:"adet",need:"gerekli",waiting:"Bekleniyor"},
- en:{title:"Branch Supplies Survey",subtitle:"Report the status of receipt printers, barcode scanners and POS fingerprint readers. Takes about 2 minutes.",
+ en:{title:"Branch Supplies Survey",subtitle:"Report the status of backup receipt printers, barcode scanners and POS fingerprint readers. Takes about 2 minutes.",
   branchH:"Branch",branchQ:"Select your branch",branchPh:"— Select branch —",branchHint:"Each branch can submit this form once per month.",
   printerH:"Receipt Printer",backupH:"Backup Receipt Printer",scannerH:"Barcode Scanner",fpH:"POS Fingerprint Reader",
   q_printer:"Does your branch have a receipt printer?",q_backup:"Do you have a backup receipt printer?",q_scanner:"Does your branch have a barcode scanner?",q_fingerprint:"Does your branch have a POS fingerprint reader?",
@@ -188,7 +187,7 @@ const t=k=>T[L][k];
 
 const BRANCHES=["Al Yarmuk","Al Nada","Al Suwaidi","King Faisal","Al Rahmanyia","Sulaymaniyah","Al Naseem","Al Dammam","Al Khobar","AlAarid"];
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-");
-const ITEMS=[{key:"printer",sec:"sec-printer"},{key:"backup",sec:"sec-backup"},{key:"scanner",sec:"sec-scanner"},{key:"fingerprint",sec:"sec-fingerprint"}];
+const ITEMS=[{key:"backup",sec:"sec-backup"},{key:"scanner",sec:"sec-scanner"},{key:"fingerprint",sec:"sec-fingerprint"}];
 const $=id=>document.getElementById(id);
 let submitted={}, lastBranch="", lastName="";
 
